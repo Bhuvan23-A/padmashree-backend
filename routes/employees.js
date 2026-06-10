@@ -17,11 +17,18 @@ router.post("/create", async (req, res) => {
   `,
     [name, email, hashedPassword, "employee"],
     function (err) {
-      if (err) {
+      if (
+        err.message.includes("UNIQUE")
+      ) {
         return res.status(400).json({
-          message: err.message,
+          message:
+            "Employee email already exists",
         });
       }
+
+      return res.status(400).json({
+        message: err.message,
+      });
 
       res.json({
         message: "Employee created",
