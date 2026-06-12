@@ -4,6 +4,7 @@ const authRoutes = require("./routes/auth");
 const employeeRoutes = require("./routes/employees");
 const entryRoutes = require("./routes/entries");
 const adminRoutes = require("./routes/admin");
+const projectRoutes = require("./routes/projects");
 require("dotenv").config();
 require("./config/database");
 const app = express();
@@ -14,6 +15,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/entries", entryRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/projects", projectRoutes);
 app.get("/", (req, res) => {
     res.json({
         message: "Padmashree Infotech Backend Running Successfully"
