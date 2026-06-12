@@ -56,5 +56,19 @@ router.post("/login", (req, res) => {
     }
   );
 });
+router.get("/users", (req, res) => {
+  db.all(
+    "SELECT id, name, email, role FROM users",
+    [],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          message: err.message,
+        });
+      }
 
+      res.json(rows);
+    }
+  );
+});
 module.exports = router;
