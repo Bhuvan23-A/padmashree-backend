@@ -1,5 +1,6 @@
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const bcrypt = require("bcryptjs");
 
 const dbPath = path.join(
   __dirname,
@@ -77,6 +78,76 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  /*
+  AUTO CREATE ADMIN
+  */
+
+  db.get(
+    `
+    SELECT * FROM users
+    WHERE role = 'admin'
+    LIMIT 1
+    `,
+    [],
+    async (err, admin) => {
+
+      if (err) {
+        console.log(err);
+        return;
+      }
+
+      if (!admin) {
+
+        const hashedPassword =
+          await bcrypt.hash(
+            "admin123",
+            10
+          );
+
+        db.run(
+          `
+          INSERT INTO users
+          (
+            name,
+            email,
+            password,
+            role
+          )
+          VALUES (?, ?, ?, ?)
+          `,
+          [
+            "Admin",
+            "admin@padmashree.com",
+            hashedPassword,
+            "admin"
+          ],
+          function(err) {
+
+            if(err) {
+              console.log(
+                "Admin creation error:",
+                err
+              );
+            } else {
+              console.log(
+                "Default Admin Created"
+              );
+              console.log(
+                "Email: admin@padmashree.com"
+              );
+              console.log(
+                "Password: admin123"
+              );
+            }
+
+          }
+        );
+
+      }
+
+    }
+  );
 
 });
 
