@@ -7,7 +7,7 @@ const db = require("../config/database");
 const router = express.Router();
 
 const upload = multer({
-  dest: "uploads/"
+  dest: "uploads/",
 });
 
 /*
@@ -21,9 +21,12 @@ router.post(
 
     const projectName = req.body.projectName;
 
+    console.log("========== CSV UPLOAD ==========");
+    console.log("Project Name:", projectName);
+
     if (!req.file) {
       return res.status(400).json({
-        message: "No file uploaded"
+        message: "No file uploaded",
       });
     }
 
@@ -36,21 +39,70 @@ router.post(
       function (err) {
 
         if (err) {
+          console.log(err);
+
           return res.status(500).json({
-            message: err.message
+            message: err.message,
           });
         }
 
         const projectId = this.lastID;
+
+        console.log(
+          "Created Project ID:",
+          projectId
+        );
 
         const records = [];
 
         fs.createReadStream(req.file.path)
           .pipe(csv())
           .on("data", (row) => {
-            records.push(row);
+
+            /*
+            REMOVE EMPTY ROWS
+            */
+
+            const values = Object.values(row);
+
+            const hasData = values.some(
+              (value) =>
+                value &&
+                value.toString().trim() !== ""
+            );
+
+            if (hasData) {
+
+              /*
+              REMOVE EMPTY COLUMN NAMES
+              */
+
+              const cleanRow = {};
+
+              Object.keys(row).forEach((key) => {
+
+                const cleanKey =
+                  key.trim();
+
+                if (cleanKey !== "") {
+                  cleanRow[cleanKey] =
+                    row[key];
+                }
+
+              });
+
+              records.push(cleanRow);
+            }
+
           })
           .on("end", () => {
+
+            console.log(
+              "Records Parsed:",
+              records.length
+            );
+
+            let inserted = 0;
 
             records.forEach((record) => {
 
@@ -65,19 +117,38 @@ router.post(
                 `,
                 [
                   projectId,
-                  JSON.stringify(record)
-                ]
+                  JSON.stringify(record),
+                ],
+                function (err) {
+
+                  if (err) {
+                    console.log(
+                      "INSERT ERROR:",
+                      err
+                    );
+                  } else {
+                    inserted++;
+                  }
+
+                }
               );
 
             });
 
-            fs.unlinkSync(req.file.path);
+            fs.unlinkSync(
+              req.file.path
+            );
+
+            console.log(
+              "Upload Completed"
+            );
 
             res.json({
-              message: "Project Uploaded Successfully",
+              message:
+                "Project Uploaded Successfully",
               totalRecords:
                 records.length,
-              projectId
+              projectId,
             });
 
           });
@@ -101,6 +172,7 @@ router.get(
       SELECT *
       FROM records
       WHERE completed = 0
+      ORDER BY id ASC
       LIMIT 1
       `,
       [],
@@ -108,13 +180,13 @@ router.get(
 
         if (err) {
           return res.status(500).json({
-            message: err.message
+            message: err.message,
           });
         }
 
         if (!row) {
           return res.json({
-            finished: true
+            finished: true,
           });
         }
 
@@ -123,7 +195,7 @@ router.get(
           recordId: row.id,
           data: JSON.parse(
             row.source_data
-          )
+          ),
         });
 
       }
@@ -131,5 +203,4 @@ router.get(
 
   }
 );
-
 module.exports = router;

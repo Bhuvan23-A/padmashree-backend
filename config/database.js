@@ -46,12 +46,8 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       employee_id INTEGER,
-      respondent_name TEXT,
-      phone TEXT,
-      age INTEGER,
-      gender TEXT,
-      location TEXT,
-      feedback TEXT,
+      record_id INTEGER,
+      entered_data TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
